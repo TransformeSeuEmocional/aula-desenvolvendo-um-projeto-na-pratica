@@ -20,9 +20,10 @@ ou autenticação.
 ## Funcionalidades
 
 - Cálculo em tempo real, sem precisar clicar em "calcular"
+- **Resumo automático** em linguagem natural interpretando os indicadores
 - Ícone de ajuda (ⓘ) em cada campo, com explicação ao passar o mouse/focar
 - Botão **Limpar** para resetar todos os campos
-- Botão **Exportar imagem** para baixar os resultados + gráfico como PNG
+- Botão **Exportar imagem** para baixar o resumo + resultados + gráfico como PNG
 
 ## Stack técnica
 
