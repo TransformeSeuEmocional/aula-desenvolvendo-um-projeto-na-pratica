@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
+  MousePointerClick,
   Percent,
   ShoppingCart,
+  Sparkles,
   Target,
   TrendingUp,
   Users,
@@ -67,8 +70,18 @@ export function PainelResultados({ dados, resultados }: PainelResultadosProps) {
     );
   }
 
-  const { roas, roi, cacReal, vendasBreakEven, numeroVendas, lucroLiquido, cacDentroDaMeta } =
-    resultados;
+  const {
+    roas,
+    roi,
+    cacReal,
+    vendasBreakEven,
+    numeroVendas,
+    lucroLiquido,
+    cacDentroDaMeta,
+    cpc,
+    taxaConversaoReal,
+    vendasEsperadas,
+  } = resultados;
 
   return (
     <Card>
@@ -119,6 +132,41 @@ export function PainelResultados({ dados, resultados }: PainelResultadosProps) {
             valor={formatarMoeda(lucroLiquido)}
             tom={lucroLiquido >= 0 ? "positivo" : "negativo"}
             subtexto="Após custo do produto"
+          />
+        )}
+        {cpc !== null && (
+          <StatTile
+            icon={MousePointerClick}
+            label="Custo por clique"
+            valor={formatarMoeda(cpc)}
+            subtexto="Investimento ÷ cliques"
+          />
+        )}
+        {taxaConversaoReal !== null && (
+          <StatTile
+            icon={Activity}
+            label="Taxa de conversão real"
+            valor={formatarPercentual(taxaConversaoReal, 2)}
+            subtexto="Vendas ÷ cliques"
+          />
+        )}
+        {vendasEsperadas !== null && (
+          <StatTile
+            icon={Sparkles}
+            label="Vendas esperadas"
+            valor={formatarNumero(vendasEsperadas, 0)}
+            tom={
+              numeroVendas !== null
+                ? numeroVendas >= vendasEsperadas
+                  ? "positivo"
+                  : "negativo"
+                : "neutro"
+            }
+            subtexto={
+              numeroVendas !== null
+                ? `Real: ${formatarNumero(numeroVendas, 0)} vendas`
+                : "Cliques × taxa de conversão esperada"
+            }
           />
         )}
       </div>
