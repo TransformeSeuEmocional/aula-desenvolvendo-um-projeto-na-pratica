@@ -54,4 +54,4 @@ npm run start
 Projeto pronto para deploy na [Vercel](https://vercel.com) sem configuração adicional
 (zero variáveis de ambiente obrigatórias).
 
-**Link de deploy:** _a preencher após o deploy_
+**Link de deploy:** https://aula-desenvolvendo-um-projeto-na-pr.vercel.app
