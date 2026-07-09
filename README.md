@@ -13,7 +13,16 @@ ou autenticação.
 - **ROI** — Retorno sobre Investimento, em %
 - **CAC real** — Custo de Aquisição de Cliente, comparado a uma meta opcional
 - **Vendas necessárias para o break-even**
-- **Lucro líquido** (quando o custo do produto/serviço é informado)
+- **Lucro líquido** (quando a margem de lucro esperada é informada)
+- **Custo por clique (CPC)** e **taxa de conversão real** (quando os cliques são informados)
+- **Vendas esperadas** — cliques × taxa de conversão esperada, comparado às vendas reais
+
+## Funcionalidades
+
+- Cálculo em tempo real, sem precisar clicar em "calcular"
+- Ícone de ajuda (ⓘ) em cada campo, com explicação ao passar o mouse/focar
+- Botão **Limpar** para resetar todos os campos
+- Botão **Exportar imagem** para baixar os resultados + gráfico como PNG
 
 ## Stack técnica
 
@@ -21,6 +30,7 @@ ou autenticação.
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [Recharts](https://recharts.org) para o gráfico de Investimento vs. Faturamento
 - [lucide-react](https://lucide.dev) para ícones
+- [html-to-image](https://github.com/bubkoo/html-to-image) para exportar os resultados como PNG
 
 ## Como rodar localmente
 
@@ -48,6 +58,8 @@ npm run start
   variantes `dark:` no CSS — a paleta escura já é o padrão fixo.
 - Campos numéricos usam `<input type="number">` com separador decimal `.` (padrão
   do navegador); a formatação de saída (resultados) segue o padrão `pt-BR` (`R$ 1.234,56`).
+- Margem de lucro (%) substitui um campo de custo do produto em R$: o custo é derivado
+  de `Ticket médio × (1 − margem/100)`, evitando que o usuário precise calcular isso à parte.
 
 ## Deploy
 
