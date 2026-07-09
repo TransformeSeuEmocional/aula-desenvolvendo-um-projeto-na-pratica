@@ -41,12 +41,42 @@ export function calcularLucroLiquido(
   return faturamento - investimento - custoProduto * numeroVendas;
 }
 
+/** Deriva o custo do produto/serviço a partir da margem de lucro (%) sobre o ticket médio. */
+export function calcularCustoProdutoPorMargem(
+  ticketMedio: number,
+  margemLucro: number | undefined
+): number | undefined {
+  if (!margemLucro || margemLucro <= 0) return undefined;
+  return ticketMedio * (1 - margemLucro / 100);
+}
+
 export function compararCAC(
   cacReal: number | null,
   cacDesejado: number | undefined
 ): boolean | null {
   if (cacReal === null || !cacDesejado || cacDesejado <= 0) return null;
   return cacReal <= cacDesejado;
+}
+
+export function calcularCPC(investimento: number, cliques: number | undefined): number | null {
+  if (!cliques || cliques <= 0) return null;
+  return investimento / cliques;
+}
+
+export function calcularTaxaConversaoReal(
+  numeroVendas: number | null,
+  cliques: number | undefined
+): number | null {
+  if (numeroVendas === null || !cliques || cliques <= 0) return null;
+  return (numeroVendas / cliques) * 100;
+}
+
+export function calcularVendasEsperadas(
+  cliques: number | undefined,
+  taxaConversaoEsperada: number | undefined
+): number | null {
+  if (!cliques || cliques <= 0 || !taxaConversaoEsperada || taxaConversaoEsperada <= 0) return null;
+  return cliques * (taxaConversaoEsperada / 100);
 }
 
 /** Valida os campos obrigatórios e retorna mensagens de erro amigáveis (sem jargão técnico). */
@@ -80,12 +110,16 @@ export function calcularResultados(dados: DadosCampanha): ResultadosCampanha {
       vendasBreakEven: null,
       lucroLiquido: null,
       cacDentroDaMeta: null,
+      cpc: null,
+      taxaConversaoReal: null,
+      vendasEsperadas: null,
       erros,
     };
   }
 
   const numeroVendas = calcularNumeroVendas(dados.faturamento, dados.ticketMedio);
   const cacReal = calcularCACReal(dados.investimento, numeroVendas);
+  const custoProduto = calcularCustoProdutoPorMargem(dados.ticketMedio, dados.margemLucro);
 
   return {
     roas: calcularROAS(dados.faturamento, dados.investimento),
@@ -93,13 +127,11 @@ export function calcularResultados(dados: DadosCampanha): ResultadosCampanha {
     numeroVendas,
     cacReal,
     vendasBreakEven: calcularVendasBreakEven(dados.investimento, dados.ticketMedio),
-    lucroLiquido: calcularLucroLiquido(
-      dados.faturamento,
-      dados.investimento,
-      dados.custoProduto,
-      numeroVendas
-    ),
+    lucroLiquido: calcularLucroLiquido(dados.faturamento, dados.investimento, custoProduto, numeroVendas),
     cacDentroDaMeta: compararCAC(cacReal, dados.cacDesejado),
+    cpc: calcularCPC(dados.investimento, dados.cliques),
+    taxaConversaoReal: calcularTaxaConversaoReal(numeroVendas, dados.cliques),
+    vendasEsperadas: calcularVendasEsperadas(dados.cliques, dados.taxaConversaoEsperada),
     erros: [],
   };
 }

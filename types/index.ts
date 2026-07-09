@@ -5,8 +5,12 @@ export interface DadosCampanha {
   ticketMedio: number;
   /** Opcional: meta de CAC para comparação visual. */
   cacDesejado?: number;
-  /** Opcional: custo do produto/serviço (COGS) por venda, para lucro líquido. */
-  custoProduto?: number;
+  /** Opcional: percentual de lucro sobre o ticket médio, usado para derivar o custo do produto. */
+  margemLucro?: number;
+  /** Opcional: número de cliques/visitantes gerados pela campanha. */
+  cliques?: number;
+  /** Opcional: percentual esperado de conversão de cliques em vendas. */
+  taxaConversaoEsperada?: number;
 }
 
 /** Indicadores calculados a partir de DadosCampanha. `null` quando não é possível calcular. */
@@ -18,5 +22,8 @@ export interface ResultadosCampanha {
   vendasBreakEven: number | null;
   lucroLiquido: number | null;
   cacDentroDaMeta: boolean | null;
+  cpc: number | null;
+  taxaConversaoReal: number | null;
+  vendasEsperadas: number | null;
   erros: string[];
 }
