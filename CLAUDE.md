@@ -45,10 +45,11 @@ Sempre que uma etapa exigir uma credencial, token ou decisão que só o usuário
 |---|---|---|
 | Framework | **Next.js** (App Router) | Padrão de mercado para deploy simples na Vercel, zero-config |
 | Linguagem | **TypeScript** | Segurança de tipos nos cálculos financeiros |
-| Estilização | **Tailwind CSS** | Agilidade para um design moderno e responsivo |
-| Componentes UI | **shadcn/ui** (opcional, usar se agilizar) | Inputs, cards e botões consistentes |
+| Estilização | **Tailwind CSS v4** | Agilidade para um design moderno e responsivo; tema definido em `app/globals.css` via `@theme` (sem `tailwind.config.ts`, que não existe nessa versão) |
+| Componentes UI | Componentes próprios (`components/ui/`) | shadcn/ui avaliado e descartado — poucos componentes reais precisos (`Card`), não justificava a dependência |
 | Gráficos | **Recharts** | Leve, declarativo, fácil de estilizar em modo escuro |
-| Ícones | **lucide-react** | Consistente com shadcn/ui |
+| Ícones | **lucide-react** | Ícones consistentes em todo o app |
+| Exportação de imagem | **html-to-image** | Gera PNG do resumo + resultados + gráfico para download |
 | Deploy | **Vercel** | Requisito do projeto |
 | Hospedagem de código | **GitHub** | Requisito do projeto |
 
@@ -59,11 +60,18 @@ Não introduza outras dependências pesadas (Redux, React Query, ORMs, etc.) —
 Todos os cálculos são derivados dos campos de entrada abaixo. Implemente as fórmulas em um módulo isolado (ex.: `lib/calculos.ts`), puro e testável, separado da camada visual.
 
 ### Campos de entrada (inputs do usuário)
+
+Obrigatórios:
 - **Investimento em anúncios** (R$)
 - **Faturamento gerado** (R$) — receita total no período
 - **Ticket médio** (R$) — valor médio por venda
-- **CAC desejado / meta** (R$) — opcional, para comparação
-- **Custo do produto/serviço (COGS)** (R$) — opcional, para cálculo de lucro líquido, se o usuário quiser refinar
+
+Opcionais:
+- **Cliques de visitantes** (número) — usado para CPC e taxa de conversão real
+- **Taxa de conversão esperada** (%) — junto com cliques, estima vendas esperadas
+- **CAC desejado / meta** (R$) — para comparação com o CAC real
+- **Margem de lucro esperada** (%) — substitui um campo de custo em R$; o custo do
+  produto é derivado disso (ver fórmula de lucro líquido abaixo)
 
 ### Indicadores calculados
 
@@ -73,18 +81,41 @@ Todos os cálculos são derivados dos campos de entrada abaixo. Implemente as f�
 - **ROI (Retorno sobre Investimento, em %)**
   `ROI = ((Faturamento - Investimento) / Investimento) * 100`
 
+- **Número de vendas (estimado)**
+  `Número de vendas = Faturamento / Ticket médio`
+  (Decisão de UX: o usuário informa Faturamento, não o número de vendas diretamente,
+  para manter o formulário enxuto — ver `lib/calculos.ts`.)
+
 - **CAC real (Custo de Aquisição de Cliente)**
   `CAC real = Investimento / Número de vendas`
-  (Número de vendas pode ser derivado de `Faturamento / Ticket médio`, ou inserido diretamente se o usuário preferir informar vendas ao invés de faturamento — decida a UX mais simples e documente a escolha no código.)
 
 - **Número de vendas necessárias para o break-even**
   `Vendas para break-even = Investimento / Ticket médio`
 
-- **Lucro líquido** (se COGS informado)
-  `Lucro líquido = Faturamento - Investimento - (COGS * Número de vendas)`
+- **Custo do produto (derivado da margem de lucro)**
+  `Custo do produto = Ticket médio * (1 - Margem de lucro / 100)`
+
+- **Lucro líquido** (se margem de lucro informada)
+  `Lucro líquido = Faturamento - Investimento - (Custo do produto * Número de vendas)`
 
 - **Comparação com CAC desejado**
   Sinalizar visualmente se `CAC real <= CAC desejado` (verde/positivo) ou `CAC real > CAC desejado` (vermelho/alerta).
+
+- **Custo por clique (CPC)** (se cliques informados)
+  `CPC = Investimento / Cliques`
+
+- **Taxa de conversão real** (se cliques informados)
+  `Taxa de conversão real = (Número de vendas / Cliques) * 100`
+
+- **Vendas esperadas** (se cliques e taxa de conversão esperada informados)
+  `Vendas esperadas = Cliques * (Taxa de conversão esperada / 100)`
+  Comparar com o número de vendas real (verde se real >= esperado, vermelho caso contrário).
+
+- **Resumo textual**
+  Um parágrafo em linguagem natural interpretando os indicadores acima (lucratividade,
+  vendas vs. break-even, CAC, lucro líquido, conversão), gerado por
+  `gerarResumoTextual` em `lib/calculos.ts`. Cada frase só aparece se os dados
+  necessários para calculá-la foram preenchidos.
 
 ### Validações
 - Impedir divisão por zero (Investimento ou Ticket médio = 0 → mostrar mensagem amigável, não erro técnico).
@@ -104,6 +135,8 @@ Todos os cálculos são derivados dos campos de entrada abaixo. Implemente as f�
 - **Responsividade:** Mobile-first. Testar visualmente em larguras pequenas (360px) até desktop wide (1440px+). Em mobile, o formulário e os resultados devem empilhar verticalmente de forma legível; o gráfico deve se adaptar sem cortar informação.
 - **Gráfico de apoio:** Deve comunicar visualmente a relação Investimento vs. Faturamento (ex.: gráfico de barras comparativo) e, se fizer sentido, a evolução até o break-even. Priorize clareza sobre complexidade — o usuário deve entender o gráfico em segundos.
 - **Feedback em tempo real:** Os resultados e o gráfico devem atualizar automaticamente conforme o usuário digita (sem necessidade de clicar em "calcular"), com debounce leve se necessário para performance.
+- **Ajuda contextual:** Cada campo do formulário tem um ícone (ⓘ) com tooltip explicando o que ele representa, para uso por quem não é familiarizado com os termos.
+- **Ações do usuário:** Botão **Limpar** (reseta todos os campos) e botão **Exportar imagem** (baixa um PNG do resumo + resultados + gráfico via `html-to-image`).
 
 ## 7. Estrutura de Arquivos Esperada
 
@@ -112,23 +145,25 @@ Todos os cálculos são derivados dos campos de entrada abaixo. Implemente as f�
 ├── app/
 │   ├── layout.tsx
 │   ├── page.tsx              # página única com toda a calculadora
-│   └── globals.css
+│   └── globals.css           # tema Tailwind v4 (paleta dark fixa) via @theme
 ├── components/
 │   ├── FormularioCampanha.tsx
+│   ├── ResumoTextual.tsx     # resumo em linguagem natural
 │   ├── PainelResultados.tsx
 │   ├── GraficoROI.tsx
-│   └── ui/                   # componentes shadcn/ui, se usados
+│   └── ui/
+│       └── Card.tsx          # wrapper de card reutilizável (sem shadcn/ui)
 ├── lib/
-│   └── calculos.ts           # funções puras de cálculo (ROI, ROAS, break-even, etc.)
+│   └── calculos.ts           # funções puras: ROI, ROAS, CAC, break-even, CPC,
+│                              # conversão, resumo textual, formatação pt-BR
 ├── types/
 │   └── index.ts              # tipos TypeScript dos dados da campanha
 ├── public/
 ├── README.md
 ├── CLAUDE.md
 ├── package.json
-├── tailwind.config.ts
 ├── tsconfig.json
-└── next.config.js
+└── next.config.ts
 ```
 
 Mantenha a lógica de cálculo (`lib/calculos.ts`) completamente separada dos componentes visuais. Isso facilita testes e evita bugs de arredondamento espalhados pela UI.
@@ -164,8 +199,9 @@ Mantenha a lógica de cálculo (`lib/calculos.ts`) completamente separada dos co
 
 O projeto está concluído quando:
 - [ ] A calculadora funciona 100% no client-side, sem erros no console.
-- [ ] Todos os indicadores (ROI, ROAS, CAC, break-even, vendas necessárias) estão corretos e validados com pelo menos 2-3 cenários de teste manual.
+- [ ] Todos os indicadores (ROI, ROAS, CAC, break-even, vendas necessárias, CPC, conversão, resumo textual) estão corretos e validados com pelo menos 2-3 cenários de teste manual.
 - [ ] O gráfico reflete corretamente os dados inseridos e se atualiza em tempo real.
+- [ ] Botões Limpar e Exportar imagem funcionam corretamente.
 - [ ] O modo escuro é o padrão e o visual é profissional em desktop e mobile.
 - [ ] Todo o texto da interface está em português do Brasil.
 - [ ] O código está no GitHub com histórico de commits organizado e README preenchido.
