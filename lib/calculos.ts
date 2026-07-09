@@ -136,6 +136,80 @@ export function calcularResultados(dados: DadosCampanha): ResultadosCampanha {
   };
 }
 
+/** Gera um resumo em linguagem natural interpretando os indicadores calculados. */
+export function gerarResumoTextual(
+  dados: DadosCampanha,
+  resultados: ResultadosCampanha
+): string[] {
+  if (resultados.erros.length > 0) return [];
+
+  const {
+    roas,
+    roi,
+    numeroVendas,
+    cacReal,
+    vendasBreakEven,
+    lucroLiquido,
+    cacDentroDaMeta,
+    taxaConversaoReal,
+    vendasEsperadas,
+  } = resultados;
+
+  const frases: string[] = [];
+
+  if (roi !== null && roas !== null) {
+    frases.push(
+      roi >= 0
+        ? `Sua campanha está lucrativa: o ROI foi de ${formatarPercentual(roi, 1)} e o ROAS de ${formatarNumero(roas, 2)}x — cada R$ 1 investido retornou ${formatarMoeda(roas)}.`
+        : `Sua campanha está no prejuízo: o ROI foi de ${formatarPercentual(roi, 1)} e o ROAS de ${formatarNumero(roas, 2)}x — cada R$ 1 investido retornou apenas ${formatarMoeda(roas)}.`
+    );
+  }
+
+  if (numeroVendas !== null && vendasBreakEven !== null) {
+    const diferenca = numeroVendas - vendasBreakEven;
+    frases.push(
+      diferenca >= 0
+        ? `Foram ${formatarNumero(numeroVendas, 0)} vendas estimadas, ${formatarNumero(diferenca, 0)} acima das ${formatarNumero(vendasBreakEven, 0)} necessárias para o break-even.`
+        : `Foram ${formatarNumero(numeroVendas, 0)} vendas estimadas, ainda ${formatarNumero(Math.abs(diferenca), 0)} abaixo das ${formatarNumero(vendasBreakEven, 0)} necessárias para o break-even.`
+    );
+  }
+
+  if (cacReal !== null) {
+    if (cacDentroDaMeta === null) {
+      frases.push(`O custo de aquisição por cliente (CAC) real foi de ${formatarMoeda(cacReal)}.`);
+    } else if (cacDentroDaMeta) {
+      frases.push(
+        `O CAC real de ${formatarMoeda(cacReal)} ficou dentro da meta de ${formatarMoeda(dados.cacDesejado ?? 0)}.`
+      );
+    } else {
+      frases.push(
+        `O CAC real de ${formatarMoeda(cacReal)} ficou acima da meta de ${formatarMoeda(dados.cacDesejado ?? 0)}.`
+      );
+    }
+  }
+
+  if (lucroLiquido !== null) {
+    frases.push(
+      lucroLiquido >= 0
+        ? `Considerando a margem de lucro informada, o lucro líquido estimado é de ${formatarMoeda(lucroLiquido)}.`
+        : `Considerando a margem de lucro informada, a campanha fecha com prejuízo líquido de ${formatarMoeda(Math.abs(lucroLiquido))}.`
+    );
+  }
+
+  if (taxaConversaoReal !== null) {
+    let frase = `A taxa de conversão real foi de ${formatarPercentual(taxaConversaoReal, 2)}`;
+    frase +=
+      vendasEsperadas !== null && numeroVendas !== null
+        ? numeroVendas >= vendasEsperadas
+          ? `, superando as ${formatarNumero(vendasEsperadas, 0)} vendas esperadas.`
+          : `, abaixo das ${formatarNumero(vendasEsperadas, 0)} vendas esperadas.`
+        : ".";
+    frases.push(frase);
+  }
+
+  return frases;
+}
+
 export function formatarMoeda(valor: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",

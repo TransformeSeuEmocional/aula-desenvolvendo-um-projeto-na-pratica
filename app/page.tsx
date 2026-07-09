@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import { FormularioCampanha } from "@/components/FormularioCampanha";
 import { GraficoROI } from "@/components/GraficoROI";
 import { PainelResultados } from "@/components/PainelResultados";
+import { ResumoTextual } from "@/components/ResumoTextual";
 import { calcularResultados } from "@/lib/calculos";
 import { DadosCampanha } from "@/types";
 
@@ -77,6 +78,7 @@ export default function Home() {
             </button>
           </div>
           <div ref={areaExportacaoRef} className="flex flex-col gap-6">
+            <ResumoTextual dados={dados} resultados={resultados} />
             <PainelResultados dados={dados} resultados={resultados} />
             <GraficoROI dados={dados} resultados={resultados} />
           </div>
